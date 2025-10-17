@@ -19,6 +19,7 @@
             --interview-color: #007bff;
             --practical-color: #fd7e14;
             --essay-color: #28a745;
+            --step1-color: #6f42c1;
             --finished-color: #6c757d;
         }
         body {
@@ -211,6 +212,7 @@
         .tag-interview { background-color: var(--interview-color); }
         .tag-practical { background-color: var(--practical-color); }
         .tag-essay { background-color: var(--essay-color); }
+        .tag-step1 { background-color: var(--step1-color); }
         .event-info {
             font-size: 1.1em;
         }
@@ -298,6 +300,7 @@
             if (type === '면접') return 'tag-interview';
             if (type === '실기') return 'tag-practical';
             if (type === '논술') return 'tag-essay';
+            if (type === '1단계') return 'tag-step1';
             return '';
         }
         

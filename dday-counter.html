@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2025학년도 수시 전형 D-Day 카운터</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --main-color: #343a40;
+            --primary-color: #007bff;
+            --border-color: #dee2e6;
+            --card-bg: #ffffff;
+            --shadow: 0 4px 12px rgba(0,0,0,0.1);
+            --interview-color: #007bff;
+            --practical-color: #fd7e14;
+            --essay-color: #28a745;
+            --finished-color: #6c757d;
+        }
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--main-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 30px;
+            box-sizing: border-box;
+        }
+        h1, h2 {
+            text-align: center;
+            color: var(--main-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 15px;
+            margin-top: 0;
+        }
+        h2 {
+            margin-top: 40px;
+            font-size: 1.5em;
+        }
+        #search-input {
+            width: 100%;
+            padding: 12px 15px;
+            margin: 20px 0;
+            font-size: 1em;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-sizing: border-box;
+            transition: box-shadow 0.3s ease;
+        }
+        #search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+        }
+        .student-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .student-btn {
+            background-color: #fff;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .student-btn:hover {
+            background-color: var(--primary-color);
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .final-list {
+            list-style: none;
+            padding: 0;
+        }
+        .final-list li {
+            background-color: #f1f3f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: flex-start;
+            font-size: 1.1em;
+            transition: background-color 0.2s ease;
+        }
+        .final-list li:hover {
+            background-color: #e9ecef;
+        }
+        .final-list .date {
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-right: 20px;
+            white-space: nowrap;
+        }
+        .final-list .univ {
+            font-weight: 500;
+            text-align: left;
+            line-height: 1.5;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: overlayFadeIn 0.3s ease-out;
+        }
+        @keyframes overlayFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .modal-content {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+            animation: modalSlideIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        @keyframes modalSlideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 2em;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+            line-height: 1;
+            z-index: 1;
+        }
+        .modal-close:hover {
+            color: #333;
+        }
+        #show-hidden-btn {
+            position: absolute;
+            top: 22px;
+            right: 55px;
+            cursor: pointer;
+            display: none; /* Initially hidden */
+            z-index: 1;
+            color: #888;
+        }
+        #show-hidden-btn:hover {
+            color: #333;
+        }
+        #modal-title {
+            margin-top: 0;
+            padding-right: 60px; /* Space for buttons */
+            font-size: 1.8em;
+            color: var(--primary-color);
+            text-align: center;
+        }
+        #modal-body {
+            margin-top: 20px;
+        }
+        .event-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+            transition: opacity 0.3s ease;
+        }
+        .event-item:last-child {
+            border-bottom: none;
+        }
+        .event-tag {
+            padding: 5px 12px;
+            border-radius: 15px;
+            color: #fff;
+            font-weight: 700;
+            margin-right: 15px;
+            flex-shrink: 0;
+            width: 60px;
+            text-align: center;
+        }
+        .tag-interview { background-color: var(--interview-color); }
+        .tag-practical { background-color: var(--practical-color); }
+        .tag-essay { background-color: var(--essay-color); }
+        .event-info {
+            font-size: 1.1em;
+        }
+        .event-dday {
+            margin-left: auto;
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #e63946;
+            margin-right: 15px;
+        }
+        .event-dday.finished {
+            color: var(--finished-color);
+            font-weight: 500;
+        }
+        .hide-btn {
+            background: #e9ecef;
+            border: 1px solid #dee2e6;
+            color: #495057;
+            padding: 4px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: background-color 0.2s ease;
+        }
+        .hide-btn:hover {
+            background: #ced4da;
+        }
+        .hidden-event {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>2025학년도 수시 전형 D-Day</h1>
+        <input type="text" id="search-input" placeholder="학생 이름으로 검색...">
+        <div id="student-grid" class="student-grid">
+            <!-- Student buttons will be inserted here by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Modal Structure -->
+    <div id="modal" class="modal-overlay">
+        <div class="modal-content">
+            <span id="modal-close" class="modal-close">&times;</span>
+            <div id="show-hidden-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </div>
+            <h2 id="modal-title"></h2>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // 1. Supabase 클라이언트 설정
+        // 아까 복사해 둔 URL과 anon 키를 여기에 붙여넣으세요.
+        const SUPABASE_URL = 'https://hhgykrylnfvvrcrkrrud.supabase.co'; 
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhoZ3lrcnlsbmZ2dnJjcmtycnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2ODI3MjUsImV4cCI6MjA3NjI1ODcyNX0.24sdL2NyHA0K-pewG52rjJFDTNmLFIn4_xTQ8VQg5b8';
+
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // --- 이 아래부터는 기존 로직을 Supabase에 맞게 수정한 코드입니다 ---
+        
+        let events = []; // 데이터를 담을 빈 배열
+
+        // D-Day 계산 함수 (기존과 동일)
+        function calculateDday(targetDate) {
+            const today = new Date();
+            const target = new Date(targetDate);
+            today.setHours(0, 0, 0, 0);
+            target.setHours(0, 0, 0, 0);
+
+            const diffTime = target.getTime() - today.getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays < 0) return '끝🎉';
+            if (diffDays === 0) return 'D-DAY';
+            return `D-${diffDays}`;
+        }
+
+        // 태그 클래스 함수 (기존과 동일)
+        function getTagClass(type) {
+            if (type === '면접') return 'tag-interview';
+            if (type === '실기') return 'tag-practical';
+            if (type === '논술') return 'tag-essay';
+            return '';
+        }
+        
+        // Supabase에서 데이터를 불러와서 앱을 초기화하는 메인 함수
+        async function initializeApp() {
+            const studentGrid = document.getElementById('student-grid');
+            const searchInput = document.getElementById('search-input');
+            const modal = document.getElementById('modal');
+            const modalClose = document.getElementById('modal-close');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            const showHiddenBtn = document.getElementById('show-hidden-btn');
+
+            let currentStudentName = null;
+            const hiddenEventsState = {};
+
+            // 2. Supabase에서 events 데이터 가져오기
+            try {
+                const { data, error } = await supabase
+                    .from('events') // 우리가 만든 테이블 이름
+                    .select('*');   // 모든 컬럼 선택
+
+                if (error) {
+                    throw error;
+                }
+                
+                events = data; // 가져온 데이터를 events 변수에 할당
+
+            } catch (error) {
+                console.error('데이터 로딩 실패:', error);
+                document.querySelector('.container').innerHTML = '<h1>데이터를 불러오는 중 오류가 발생했습니다.</h1>';
+                return; // 오류 발생 시 함수 종료
+            }
+
+            const studentNames = [...new Set(events.map(e => e.name))].sort((a, b) => a.localeCompare(b, 'ko-KR'));
+            
+            function renderStudentButtons(filter = '') {
+                studentGrid.innerHTML = '';
+                const filteredNames = studentNames.filter(name => name.includes(filter));
+                
+                filteredNames.forEach(name => {
+                    const btn = document.createElement('button');
+                    btn.className = 'student-btn';
+                    btn.textContent = name;
+                    btn.dataset.name = name;
+                    studentGrid.appendChild(btn);
+                });
+            }
+
+            // --- 이 아래는 이벤트 리스너 등 기존 코드와 거의 동일합니다 ---
+            renderStudentButtons();
+
+            searchInput.addEventListener('keyup', (e) => {
+                renderStudentButtons(e.target.value);
+            });
+
+            studentGrid.addEventListener('click', (e) => {
+                if (e.target.classList.contains('student-btn')) {
+                    currentStudentName = e.target.dataset.name;
+                    const studentEvents = events
+                        .filter(event => event.name === currentStudentName)
+                        .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                    modalTitle.textContent = `${currentStudentName} 학생 전형 일정`;
+                    modalBody.innerHTML = '';
+                    
+                    if (!hiddenEventsState[currentStudentName]) {
+                        hiddenEventsState[currentStudentName] = new Set();
+                    }
+
+                    if (studentEvents.length === 0) {
+                        modalBody.innerHTML = '<p style="text-align:center;">예정된 전형이 없습니다.</p>';
+                    } else {
+                        studentEvents.forEach(event => {
+                            const eventId = `${event.date}-${event.type}`;
+                            const dday = calculateDday(event.date);
+                            const itemDiv = document.createElement('div');
+                            itemDiv.className = 'event-item';
+                            itemDiv.dataset.eventId = eventId;
+
+                            if (hiddenEventsState[currentStudentName].has(eventId)) {
+                                itemDiv.classList.add('hidden-event');
+                            }
+                            
+                            let ddayClass = 'event-dday';
+                            if (dday === '끝🎉') {
+                                ddayClass += ' finished';
+                            }
+
+                            itemDiv.innerHTML = `
+                                <span class="event-tag ${getTagClass(event.type)}">${event.type}</span>
+                                <span class="event-info">${event.date}</span>
+                                <span class="${ddayClass}">${dday}</span>
+                                <button class="hide-btn">숨기기</button>
+                            `;
+                            modalBody.appendChild(itemDiv);
+                        });
+                    }
+
+                    if (hiddenEventsState[currentStudentName].size > 0) {
+                        showHiddenBtn.style.display = 'block';
+                    } else {
+                        showHiddenBtn.style.display = 'none';
+                    }
+
+                    modal.style.display = 'flex';
+                }
+            });
+
+            modalBody.addEventListener('click', (e) => {
+                if (e.target.classList.contains('hide-btn')) {
+                    const eventItem = e.target.closest('.event-item');
+                    const eventId = eventItem.dataset.eventId;
+                    
+                    if (currentStudentName && eventId) {
+                        hiddenEventsState[currentStudentName].add(eventId);
+                        eventItem.classList.add('hidden-event');
+                        showHiddenBtn.style.display = 'block';
+                    }
+                }
+            });
+
+            showHiddenBtn.addEventListener('click', () => {
+                if (currentStudentName && hiddenEventsState[currentStudentName]) {
+                    hiddenEventsState[currentStudentName].clear();
+                    modalBody.querySelectorAll('.hidden-event').forEach(item => {
+                        item.classList.remove('hidden-event');
+                    });
+                    showHiddenBtn.style.display = 'none';
+                }
+            });
+
+            const closeModal = () => {
+                modal.style.display = 'none';
+            };
+            modalClose.addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+        }
+        
+        // 페이지가 로드되면 앱 실행
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
+</html>

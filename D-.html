@@ -271,7 +271,7 @@
         const SUPABASE_URL = 'https://hhgykrylnfvvrcrkrrud.supabase.co'; 
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhoZ3lrcnlsbmZ2dnJjcmtycnVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2ODI3MjUsImV4cCI6MjA3NjI1ODcyNX0.24sdL2NyHA0K-pewG52rjJFDTNmLFIn4_xTQ8VQg5b8';
 
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
         // --- 이 아래부터는 기존 로직을 Supabase에 맞게 수정한 코드입니다 ---
         
@@ -315,7 +315,7 @@
 
             // 2. Supabase에서 events 데이터 가져오기
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('events') // 우리가 만든 테이블 이름
                     .select('*');   // 모든 컬럼 선택
 

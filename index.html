@@ -244,6 +244,8 @@
         
         <div class="view-switcher">
             <img src="1.png" id="view-toggle-img" alt="View Toggle" width="50" height="50" style="cursor: pointer;">
+            <input type="checkbox" id="view-lock-checkbox" style="vertical-align: middle; margin-left: 10px;">
+            <label for="view-lock-checkbox" style="vertical-align: middle;">고정</label>
         </div>
 
         <input type="text" id="search-input" placeholder="학생 이름으로 검색...">
@@ -417,21 +419,51 @@
             const gridView = document.getElementById('grid-view');
             const listView = document.getElementById('list-view');
             const viewToggleImg = document.getElementById('view-toggle-img');
+        const viewLockCheckbox = document.getElementById('view-lock-checkbox');
+
+        const applySavedView = () => {
+            const savedView = localStorage.getItem('viewMode');
+            if (savedView) {
+                viewLockCheckbox.checked = true;
+                if (savedView === 'list') {
+                    gridView.style.display = 'none';
+                    listView.style.display = 'flex';
+                    viewToggleImg.src = '2.png';
+                } else {
+                    gridView.style.display = 'block';
+                    listView.style.display = 'none';
+                    viewToggleImg.src = '1.png';
+                }
+            }
+        };
 
             viewToggleImg.addEventListener('click', () => {
+                let newView;
                 if (viewToggleImg.src.includes('1.png')) {
                     // Switch to List View
                     gridView.style.display = 'none';
                     listView.style.display = 'flex';
                     viewToggleImg.src = '2.png';
+                    newView = 'list';
                 } else {
                     // Switch to Grid View
                     gridView.style.display = 'block';
                     listView.style.display = 'none';
                     viewToggleImg.src = '1.png';
+                    newView = 'grid';
+                }
+                if (viewLockCheckbox.checked) {
+                    localStorage.setItem('viewMode', newView);
                 }
             });
-
+            viewLockCheckbox.addEventListener('change', () => {
+                if (viewLockCheckbox.checked) {
+                    const currentView = viewToggleImg.src.includes('1.png') ? 'grid' : 'list';
+                    localStorage.setItem('viewMode', currentView);
+                } else {
+                    localStorage.removeItem('viewMode');
+                }
+            });
             // Search
             searchInput.addEventListener('keyup', (e) => {
                 renderStudentLists(e.target.value);

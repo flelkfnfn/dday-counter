@@ -33,6 +33,14 @@
             align-items: flex-start;
             min-height: 100vh;
         }
+        .content-wrapper {
+            width: 100%;
+            padding-right: 340px; /* chat-sidebar width */
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+        }
+
         .main-container {
             width: 100%;
             max-width: 1200px;
@@ -41,7 +49,6 @@
             box-shadow: var(--shadow);
             padding: 30px;
             box-sizing: border-box;
-            
         }
         h1 {
             text-align: center;
@@ -235,11 +242,93 @@
             display: none; z-index: 1; color: #888;
         }
         #show-hidden-btn-list:hover { color: #333; }
+
+        #chat-sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 340px;
+            height: 100vh;
+            background: #ffffff;
+            border-left: 1px solid var(--border-color, #ddd);
+            box-shadow: -2px 0 8px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            z-index: 9999;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        .chat-header {
+            font-weight: bold;
+            font-size: 16px;
+            border-bottom: 1px solid #ccc;
+            padding: 8px 0;
+            text-align: center;
+        }
+
+        .chat-list {
+            flex: 1;
+            overflow-y: auto;
+            margin: 8px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .chat-msg {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 6px 8px;
+            background: #fafafa;
+            word-break: break-word;
+        }
+
+        .chat-meta {
+            font-size: 11px;
+            color: #777;
+            margin-bottom: 4px;
+        }
+
+        .chat-body {
+            font-size: 14px;    
+        }
+
+        .chat-input {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .chat-input input,
+        .chat-input textarea {
+            font: inherit;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 6px 8px;
+            resize: none;
+        }
+
+        .chat-input button {
+            background: #0070f3;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        .chat-input button:hover {
+            background: #0059c9;
+        }
+
     </style>
 </head>
+
 <body>
 
-    <div class="main-container">
+    <div class="content-wrapper">
+        <div class="main-container">
         <h1>2025학년도 수시 전형 D-Day</h1>
         
         <div class="view-switcher">
@@ -524,7 +613,102 @@
             });
         }
         
-        document.addEventListener('DOMContentLoaded', initializeApp);
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeApp();
+            initializeChat();
+        });
+        
+        function initializeChat() {
+            /*------------------------------------------------------------------------------------*/
+            const CHAT_TABLE = 'messages';
+            const chatList = document.getElementById('chat-list');
+            const nameInput = document.getElementById('chat-name');
+            const contentInput = document.getElementById('chat-content');
+            const submitBtn = document.getElementById('chat-submit');
+
+            async function loadChat() {
+                chatList.innerHTML = '<div class="chat-meta">채팅을 불러오는 중...</div>';
+                try {
+                    const { data, error } = await supabaseClient
+                        .from(CHAT_TABLE)
+                        .select('*')
+                        .eq('path', location.pathname)
+                        .order('created_at', { ascending: true });
+
+                    if (error) throw error;
+
+                    chatList.innerHTML = '';
+                    if (data.length === 0) {
+                        chatList.innerHTML = '<div class="chat-meta">첫 메시지를 남겨보세요!</div>';
+                    }
+                    data.forEach(renderChat);
+
+                    // Load saved name
+                    const savedName = localStorage.getItem('chatUsername');
+                    if (savedName) {
+                        nameInput.value = savedName;
+                    }
+
+                } catch (error) {
+                    console.error('Error loading chat:', error);
+                    chatList.innerHTML = '<div class="chat-meta" style="color: red;">채팅을 불러오는 중 오류가 발생했습니다.</div>';
+                }
+            }
+
+            function renderChat(row) {
+                const el = document.createElement('div');
+                el.className = 'chat-msg';
+                el.innerHTML = `
+                <div class="chat-meta">${escapeHtml(row.name)} · ${new Date(row.created_at).toLocaleString()}</div>
+                <div class="chat-body">${escapeHtml(row.content)}</div>
+                `;
+                // If the list was showing a placeholder, clear it first
+                if (chatList.querySelector('.chat-meta') && chatList.children.length === 1) {
+                    chatList.innerHTML = '';
+                }
+                chatList.appendChild(el);
+                chatList.scrollTop = chatList.scrollHeight;
+            }
+
+            submitBtn.onclick = async () => {
+                const name = nameInput.value.trim() || '익명';
+                const content = contentInput.value.trim();
+                if (!content) return;
+
+                // Save name to localStorage
+                localStorage.setItem('chatUsername', name);
+
+                try {
+                    const { error } = await supabaseClient.from(CHAT_TABLE).insert({ path: location.pathname, name, content });
+                    if (error) throw error;
+                    contentInput.value = '';
+                } catch (error) {
+                    console.error('Error sending message:', error);
+                    alert('메시지 전송에 실패했습니다.');
+                }
+            };
+
+            supabaseClient
+                .channel('chat-room')
+                .on('postgres_changes',
+                    { event: 'INSERT', schema: 'public', table: CHAT_TABLE, filter: `path=eq.${location.pathname}` },
+                    payload => {
+                    renderChat(payload.new);
+                    })
+                .subscribe();
+
+            loadChat();
+        }
     </script>
+    <div id="chat-sidebar">
+        <div class="chat-header">💬 오픈 채팅</div>
+        <div id="chat-list" class="chat-list"></div>
+        <div class="chat-input">
+            <input id="chat-name" placeholder="이름" maxlength="30" />
+            <textarea id="chat-content" placeholder="메시지..." maxlength="500"></textarea>
+            <button id="chat-submit">보내기</button>
+        </div>
+    </div>
+
 </body>
 </html>

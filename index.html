@@ -41,6 +41,7 @@
             box-shadow: var(--shadow);
             padding: 30px;
             box-sizing: border-box;
+            
         }
         h1 {
             text-align: center;
@@ -119,6 +120,7 @@
             height: 70vh;
             border: 1px solid var(--border-color);
             border-radius: 8px;
+            width: 100%;
         }
         .list-view-container {
             display: flex;
@@ -126,7 +128,7 @@
             width: 100%;
         }
         #list-panel {
-            width: 250px;
+            width: 200px;
             border-right: 1px solid var(--border-color);
             overflow-y: auto;
         }
@@ -147,16 +149,15 @@
         }
         #detail-panel {
             flex-grow: 1;
-            padding: 20px 30px;
-            overflow-y: auto;
+            padding: 30px;
+            overflow-y: hidden;
         }
         #detail-title {
             font-size: 1.8em;
             color: var(--primary-color);
             margin-top: 0;
             margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid var(--border-color);
+            text-align: center;
         }
         #detail-body {
             height: 100%;
@@ -228,6 +229,11 @@
             display: none; z-index: 1; color: #888;
         }
         #show-hidden-btn:hover { color: #333; }
+        #show-hidden-btn-list {
+            position: absolute; top: 35px; right: 35px; cursor: pointer;
+            display: none; z-index: 1; color: #888;
+        }
+        #show-hidden-btn-list:hover { color: #333; }
     </style>
 </head>
 <body>
@@ -236,7 +242,7 @@
         <h1>2025학년도 수시 전형 D-Day</h1>
         
         <div class="view-switcher">
-            <img src="1.png" id="view-toggle-img" alt="View Toggle" width="50" height="50" style="cursor: pointer;">
+            <img src="1.png" id="view-toggle-img" alt="View Toggle" width="32" height="32" style="cursor: pointer;">
         </div>
 
         <input type="text" id="search-input" placeholder="학생 이름으로 검색...">
@@ -385,15 +391,19 @@
                     container.appendChild(itemDiv);
                 });
             }
-            // This is for modal only, so we check if the button exists
-            const showHiddenBtn = document.getElementById('show-hidden-btn');
-            if (showHiddenBtn) {
-                if (hiddenEventsState[name].size > 0) {
-                    showHiddenBtn.style.display = 'block';
-                } else {
-                    showHiddenBtn.style.display = 'none';
+
+            const showHiddenBtnModal = document.getElementById('show-hidden-btn');
+            const showHiddenBtnList = document.getElementById('show-hidden-btn-list');
+
+            [showHiddenBtnModal, showHiddenBtnList].forEach(btn => {
+                if (btn) {
+                    if (hiddenEventsState[name] && hiddenEventsState[name].size > 0) {
+                        btn.style.display = 'block';
+                    } else {
+                        btn.style.display = 'none';
+                    }
                 }
-            }
+            });
         }
 
         function setupEventListeners() {
@@ -445,12 +455,14 @@
                 if (e.target.classList.contains('list-item')) {
                     currentStudentName = e.target.dataset.name;
                     
-                    // Update active state
                     listPanel.querySelectorAll('.list-item').forEach(item => item.classList.remove('active'));
                     e.target.classList.add('active');
 
                     const detailPanel = document.getElementById('detail-panel');
                     detailPanel.innerHTML = `
+                        <div id="show-hidden-btn-list">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </div>
                         <h2 id="detail-title">${currentStudentName} 학생 전형 일정</h2>
                         <div id="detail-body"></div>
                     `;
@@ -466,7 +478,7 @@
             modalClose.addEventListener('click', closeModal);
             modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-            // Hide button logic (works for both modal and detail view via event bubbling)
+            // Hide button logic
             document.querySelector('.main-container').addEventListener('click', handleHideClick);
             document.getElementById('modal').addEventListener('click', handleHideClick);
 
@@ -475,22 +487,38 @@
                     const eventItem = e.target.closest('.event-item');
                     const eventId = eventItem.dataset.eventId;
                     if (currentStudentName && eventId) {
+                        if (!hiddenEventsState[currentStudentName]) {
+                            hiddenEventsState[currentStudentName] = new Set();
+                        }
                         hiddenEventsState[currentStudentName].add(eventId);
                         eventItem.classList.add('hidden-event');
                         
-                        const showHiddenBtn = document.getElementById('show-hidden-btn');
-                        if (showHiddenBtn) showHiddenBtn.style.display = 'block';
+                        const showHiddenBtnModal = document.getElementById('show-hidden-btn');
+                        const showHiddenBtnList = document.getElementById('show-hidden-btn-list');
+                        if (showHiddenBtnModal) showHiddenBtnModal.style.display = 'block';
+                        if (showHiddenBtnList) showHiddenBtnList.style.display = 'block';
                     }
                 }
             }
 
-            // Show hidden button (modal only)
+            // Show hidden button (modal)
             document.getElementById('show-hidden-btn').addEventListener('click', () => {
                 if (currentStudentName && hiddenEventsState[currentStudentName]) {
                     hiddenEventsState[currentStudentName].clear();
-                    // Re-render details to show hidden items
                     const modalBody = document.getElementById('modal-body');
                     renderStudentDetails(currentStudentName, modalBody);
+                }
+            });
+
+            // Show hidden button (list view)
+            document.querySelector('.main-container').addEventListener('click', (e) => {
+                const showHiddenBtnList = e.target.closest('#show-hidden-btn-list');
+                if (showHiddenBtnList) {
+                    if (currentStudentName && hiddenEventsState[currentStudentName]) {
+                        hiddenEventsState[currentStudentName].clear();
+                        const detailBodyContainer = document.querySelector('#detail-panel #detail-body');
+                        renderStudentDetails(currentStudentName, detailBodyContainer);
+                    }
                 }
             });
         }

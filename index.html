@@ -697,6 +697,10 @@
                     })
                 .subscribe();
 
+            function escapeHtml(s) {
+                return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','<':'&lt;'}[c]));
+            }
+
             loadChat();
         }
     </script>

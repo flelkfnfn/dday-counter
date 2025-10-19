@@ -671,9 +671,7 @@
                 <div class="chat-body">${escapeHtml(row.content)}</div>
                 `;
                 // If the list was showing a placeholder, clear it first
-                if (chatList.querySelector('.chat-meta') && chatList.children.length === 1) {
-                    chatList.innerHTML = '';
-                }
+
                 chatList.appendChild(el);
                 chatList.scrollTop = chatList.scrollHeight;
             }

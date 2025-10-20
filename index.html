@@ -423,10 +423,41 @@
             transition: padding-right 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
 
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(248, 249, 250, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10001;
+            transition: opacity 0.5s ease;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1.2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
     </style>
 </head>
 
 <body>
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+    </div>
 
     <div class="content-wrapper">
         <div class="main-container">
@@ -504,20 +535,28 @@
         }
         
         async function initializeApp() {
+            const loadingOverlay = document.getElementById('loading-overlay');
             try {
                 const { data, error } = await supabaseClient.from('events').select('*');
                 if (error) throw error;
                 events = data;
+
+                studentNames = [...new Set(events.map(e => e.name))].sort((a, b) => a.localeCompare(b, 'ko-KR'));
+            
+                setupEventListeners();
+                renderStudentLists();
+
             } catch (error) {
                 console.error('데이터 로딩 실패:', error);
                 document.querySelector('.main-container').innerHTML = '<h1>데이터를 불러오는 중 오류가 발생했습니다.</h1>';
-                return;
+            } finally {
+                if (loadingOverlay) {
+                    loadingOverlay.style.opacity = '0';
+                    setTimeout(() => {
+                        loadingOverlay.style.display = 'none';
+                    }, 500); // Match transition duration
+                }
             }
-
-            studentNames = [...new Set(events.map(e => e.name))].sort((a, b) => a.localeCompare(b, 'ko-KR'));
-            
-            setupEventListeners();
-            renderStudentLists();
         }
 
         function renderStudentLists(filter = '') {

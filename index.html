@@ -550,13 +550,17 @@
         let currentStudentName = null;
         const hiddenEventsState = {};
 
-        function calculateDday(targetDate) {
+        function calculateDdayDiff(targetDate) {
             const today = new Date();
             const target = new Date(targetDate);
             today.setHours(0, 0, 0, 0);
             target.setHours(0, 0, 0, 0);
             const diffTime = target.getTime() - today.getTime();
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        }
+
+        function calculateDday(targetDate) {
+            const diffDays = calculateDdayDiff(targetDate);
             if (diffDays < 0) return '끝🎉';
             if (diffDays === 0) return 'D-DAY';
             return `D-${diffDays}`;
@@ -680,27 +684,42 @@
         }
 
         function showDdayModal() {
-            const todayEvents = events.filter(event => calculateDday(event.date) === 'D-DAY');
+            const upcomingEvents = events
+                .map(event => ({ ...event, dday: calculateDdayDiff(event.date) }))
+                .filter(event => event.dday >= 0 && event.dday <= 3);
+
             const modal = document.getElementById('dday-modal');
             const modalTitle = document.getElementById('dday-modal-title');
             const modalBody = document.getElementById('dday-modal-body');
 
-            if (todayEvents.length > 0) {
-                modalTitle.textContent = '오늘의 D-DAY 일정, 함께 기도해주시고 힘내요!';
+            if (upcomingEvents.length > 0) {
+                modalTitle.textContent = 'D-3 이내 수시 일정입니다. 힘내시고 기도해주세요!';
                 modalTitle.style.display = 'block';
+                
+                upcomingEvents.sort((a, b) => {
+                    if (a.dday !== b.dday) {
+                        return a.dday - b.dday;
+                    }
+                    return a.name.localeCompare(b.name, 'ko-KR');
+                });
+
                 let content = '';
-                todayEvents.sort((a, b) => a.name.localeCompare(b.name, 'ko-KR')).forEach(event => {
+                upcomingEvents.forEach(event => {
+                    const isDday = event.dday === 0;
+                    const ddayText = calculateDday(event.date);
+                    
                     content += `
-                        <div class="event-item" style="border-bottom: 1px solid #eee; padding: 10px 5px;">
+                        <div class="event-item" style="border-bottom: 1px solid #eee; padding: 10px 5px; ${isDday ? 'background-color: #fff0f1;' : ''}">
                             <span class="event-tag ${getTagClass(event.type)}">${event.type}</span>
-                            <span style="font-size: 1.1em; font-weight: 500;">${event.name}</span>
+                            <span style="font-size: 1.1em; font-weight: 500; margin-right: auto; padding-left: 10px;">${event.name}</span>
+                            <span class="event-dday ${isDday ? '' : 'finished'}" style="${isDday ? 'color: #e63946; font-weight: 700;' : ''}">${ddayText}</span>
                         </div>
                     `;
                 });
                 modalBody.innerHTML = content;
             } else {
                 modalTitle.style.display = 'none';
-                modalBody.innerHTML = '<p style="text-align: center; padding: 20px 0;">오늘 D-DAY인 학생이 없습니다.</p>';
+                modalBody.innerHTML = '<p style="text-align: center; padding: 20px 0;">3일 이내에 D-DAY인 학생이 없습니다.</p>';
             }
 
             modal.style.display = 'flex';

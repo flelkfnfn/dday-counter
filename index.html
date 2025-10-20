@@ -322,6 +322,62 @@
             background: #0059c9;
         }
 
+        #chat-name-selection, #chat-name-display {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        #chat-name-display {
+            justify-content: space-between;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: #f8f9fa;
+        }
+
+        #selected-chat-name {
+            font-weight: 500;
+        }
+
+        #anon-btn, #select-name-btn, #change-name-btn {
+            flex-grow: 1;
+            background-color: #fff;
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        #anon-btn:hover, #select-name-btn:hover, #change-name-btn:hover {
+            background-color: var(--primary-color);
+            color: #fff;
+        }
+        
+        #change-name-btn {
+            flex-grow: 0;
+            padding: 4px 8px;
+            font-size: 0.8em;
+            background-color: #e9ecef;
+            border-color: #dee2e6;
+            color: #495057;
+        }
+        #change-name-btn:hover {
+            background-color: #ced4da;
+            color: #333;
+        }
+
+        #name-modal .modal-content h2 {
+            margin-top: 0;
+            font-size: 1.8em;
+            color: var(--primary-color);
+            text-align: center;
+        }
+
     </style>
 </head>
 

@@ -192,6 +192,9 @@
             background-color: #fff; padding: 30px; border-radius: 12px;
             width: 90%; max-width: 600px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
             position: relative; animation: modalSlideIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            max-height: 80vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         @keyframes modalSlideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .modal-close {

@@ -220,6 +220,11 @@
         .tag-practical { background-color: var(--practical-color); }
         .tag-essay { background-color: var(--essay-color); }
         .tag-step1 { background-color: var(--step1-color); }
+        .tag-practical1-step { background-color: #f76707; }   /* 실기1단계 */
+        .tag-practical1 { background-color: #ffa94d; }        /* 실기1 */
+        .tag-practical2 { background-color: #ff922b; }        /* 실기2 */
+        .tag-practical2-step { background-color: #e8590c; }   /* 실기2단계 */
+        .tag-final { background-color: #343a40; }             /* 최종 */
         .event-info { font-size: 1.1em; }
         .event-dday {
             margin-left: auto; font-size: 1.2em; font-weight: 700;
@@ -571,6 +576,11 @@
             if (type === '실기') return 'tag-practical';
             if (type === '논술') return 'tag-essay';
             if (type === '1단계') return 'tag-step1';
+            if (type === '실기1단계') return 'tag-practical1-step';
+            if (type === '실기1') return 'tag-practical1';
+            if (type === '실기2') return 'tag-practical2';
+            if (type === '실기2단계') return 'tag-practical2-step';
+            if (type === '최종') return 'tag-final';
             return '';
         }
 

@@ -685,9 +685,9 @@
             const modalTitle = document.getElementById('dday-modal-title');
             const modalBody = document.getElementById('dday-modal-body');
 
-            modalTitle.textContent = '오늘의 D-DAY 일정, 함께 기도해주시고 힘내요!';
-
             if (todayEvents.length > 0) {
+                modalTitle.textContent = '오늘의 D-DAY 일정, 함께 기도해주시고 힘내요!';
+                modalTitle.style.display = 'block';
                 let content = '';
                 todayEvents.sort((a, b) => a.name.localeCompare(b.name, 'ko-KR')).forEach(event => {
                     content += `
@@ -699,6 +699,7 @@
                 });
                 modalBody.innerHTML = content;
             } else {
+                modalTitle.style.display = 'none';
                 modalBody.innerHTML = '<p style="text-align: center; padding: 20px 0;">오늘 D-DAY인 학생이 없습니다.</p>';
             }
 

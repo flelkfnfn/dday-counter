@@ -898,6 +898,39 @@
                 updateNameUI();
             }
 
+            async function handleNameSelection(name) {
+                try {
+                    const { data: users, error } = await supabaseClient
+                        .from('chat_users')
+                        .select('pw')
+                        .eq('name', name);
+
+                    if (error) {
+                        throw error;
+                    }
+
+                    if (users.length > 0 && users[0].pw) {
+                        const user = users[0];
+                        const inputPw = prompt(`'${name}' 이름으로 채팅하려면 비밀번호를 입력하세요:`);
+                        if (inputPw === null) return; // User cancelled the prompt
+
+                        if (inputPw === user.pw) {
+                            setChatName(name);
+                            nameModal.style.display = 'none';
+                        } else {
+                            alert('비밀번호가 틀렸습니다.');
+                        }
+                    } else {
+                        // No user found or no password required
+                        setChatName(name);
+                        nameModal.style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error('Error checking password:', error);
+                    alert('이름을 확인하는 중 오류가 발생했습니다.');
+                }
+            }
+
             anonBtn.addEventListener('click', () => setChatName('익명'));
 
             selectNameBtn.addEventListener('click', () => {
@@ -907,8 +940,7 @@
                     btn.className = 'student-btn';
                     btn.textContent = name;
                     btn.addEventListener('click', () => {
-                        setChatName(name);
-                        nameModal.style.display = 'none';
+                        handleNameSelection(name);
                     });
                     nameList.appendChild(btn);
                 });
@@ -962,9 +994,11 @@
             function renderChat(row) {
                 const el = document.createElement('div');
                 el.className = 'chat-msg';
+
                 if (row.name === 'host') {
                     el.style.backgroundColor = 'yellow';
                 }
+
                 el.innerHTML = `
                 <div class="chat-meta">${escapeHtml(row.name)} · ${new Date(row.created_at).toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })}</div>
                 <div class="chat-body">${escapeHtml(row.content)}</div>

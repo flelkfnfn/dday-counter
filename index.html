@@ -462,6 +462,7 @@
     <div class="content-wrapper">
         <div class="main-container">
         <h1>2025학년도 수시 전형 D-Day</h1>
+        <div style="text-align: right; margin-bottom: 10px;"><button id="notify-btn" style="border: 1px solid #ccc; background: #f0f0f0; padding: 5px 10px; border-radius: 5px; cursor: pointer;">🔔 알림 활성화</button></div>
         
         <div class="view-switcher">
             <img src="1.png" id="view-toggle-img" alt="View Toggle" width="50" height="50" style="cursor: pointer;">
@@ -533,6 +534,8 @@
             if (type === '1단계') return 'tag-step1';
             return '';
         }
+
+
         
         async function initializeApp() {
             const loadingOverlay = document.getElementById('loading-overlay');
@@ -545,6 +548,7 @@
             
                 setupEventListeners();
                 renderStudentLists();
+                // Notification check is now handled by the service worker.
 
             } catch (error) {
                 console.error('데이터 로딩 실패:', error);
@@ -642,6 +646,41 @@
             const listPanel = document.getElementById('list-panel');
             const detailBody = document.getElementById('detail-body');
             
+            document.getElementById('notify-btn').addEventListener('click', async () => {
+                if (!('serviceWorker' in navigator)) {
+                    alert('이 브라우저는 백그라운드 알림을 지원하지 않습니다.');
+                    return;
+                }
+
+                // 1. 알림 권한 요청
+                let notificationPermission = Notification.permission;
+                if (notificationPermission !== 'granted') {
+                    notificationPermission = await Notification.requestPermission();
+                }
+
+                if (notificationPermission !== 'granted') {
+                    alert('알림 권한이 거부되어 백그라운드 알림을 설정할 수 없습니다.');
+                    return;
+                }
+
+                // 2. 서비스 워커 등록
+                const registration = await navigator.serviceWorker.register('sw.js');
+
+                // 3. 주기적 백그라운드 동기화 권한 요청 및 등록
+                try {
+                    await registration.periodicSync.register('d-day-check', {
+                        // 최소 동기화 간격 (예: 12시간)
+                        // 실제 실행 주기는 브라우저가 결정합니다.
+                        minInterval: 12 * 60 * 60 * 1000, 
+                    });
+                    alert('백그라운드 D-DAY 알림이 성공적으로 설정되었습니다!\n브라우저가 주기적으로 일정을 확인하여 알려드립니다.');
+                    console.log('Periodic Sync registered!');
+                } catch (error) {
+                    console.error('Periodic Sync registration failed:', error);
+                    alert('백그라운드 알림 설정에 실패했습니다. 브라우저가 이 기능을 지원하지 않을 수 있습니다.');
+                }
+            });
+
             // View Switcher
             const gridView = document.getElementById('grid-view');
             const listView = document.getElementById('list-view');

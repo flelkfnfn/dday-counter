@@ -451,6 +451,32 @@
             100% { transform: rotate(360deg); }
         }
 
+        #dday-info-btn {
+            position: fixed;
+            bottom: 80px; /* chat-toggle-btn height + 20px margin + 10px */
+            right: 360px;
+            width: 50px;
+            height: 50px;
+            background-color: #e63946;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 10000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: right 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.3s ease;
+        }
+        #dday-info-btn:hover {
+            transform: scale(1.1);
+        }
+        body.chat-closed #dday-info-btn {
+            right: 20px;
+        }
     </style>
 </head>
 
@@ -504,6 +530,15 @@
         </div>
     </div>
 
+    <!-- D-Day Modal -->
+    <div id="dday-modal" class="modal-overlay">
+        <div class="modal-content">
+            <span id="dday-modal-close" class="modal-close">&times;</span>
+            <h2 id="dday-modal-title"></h2>
+            <div id="dday-modal-body"></div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         const SUPABASE_URL = 'https://hhgykrylnfvvrcrkrrud.supabase.co'; 
@@ -535,8 +570,6 @@
             return '';
         }
 
-
-        
         async function initializeApp() {
             const loadingOverlay = document.getElementById('loading-overlay');
             try {
@@ -548,7 +581,13 @@
             
                 setupEventListeners();
                 renderStudentLists();
-                showTodaysEventsModal(); // Show today's events on load
+                
+                const today = new Date().toISOString().split('T')[0];
+                const lastVisit = localStorage.getItem('lastDdayModalShowDate');
+                if (lastVisit !== today) {
+                    showDdayModal();
+                    localStorage.setItem('lastDdayModalShowDate', today);
+                }
 
             } catch (error) {
                 console.error('데이터 로딩 실패:', error);
@@ -640,21 +679,15 @@
             });
         }
 
-        function showTodaysEventsModal() {
-            // Don't show again in the same session
-            if (sessionStorage.getItem('todaysEventsModalShown')) {
-                return;
-            }
-
+        function showDdayModal() {
             const todayEvents = events.filter(event => calculateDday(event.date) === 'D-DAY');
+            const modal = document.getElementById('dday-modal');
+            const modalTitle = document.getElementById('dday-modal-title');
+            const modalBody = document.getElementById('dday-modal-body');
+
+            modalTitle.textContent = '오늘의 D-DAY 일정, 함께 기도해주시고 힘내요!';
 
             if (todayEvents.length > 0) {
-                const modal = document.getElementById('modal');
-                const modalTitle = document.getElementById('modal-title');
-                const modalBody = document.getElementById('modal-body');
-
-                modalTitle.textContent = '오늘의 D-DAY 일정';
-                
                 let content = '';
                 todayEvents.sort((a, b) => a.name.localeCompare(b.name, 'ko-KR')).forEach(event => {
                     content += `
@@ -665,25 +698,22 @@
                     `;
                 });
                 modalBody.innerHTML = content;
-
-                modal.style.display = 'flex';
-                sessionStorage.setItem('todaysEventsModalShown', 'true');
+            } else {
+                modalBody.innerHTML = '<p style="text-align: center; padding: 20px 0;">오늘 D-DAY인 학생이 없습니다.</p>';
             }
+
+            modal.style.display = 'flex';
         }
 
         function setupEventListeners() {
             const searchInput = document.getElementById('search-input');
             const studentGrid = document.getElementById('student-grid');
             const listPanel = document.getElementById('list-panel');
-            const detailBody = document.getElementById('detail-body');
             
-
-
             // View Switcher
             const gridView = document.getElementById('grid-view');
             const listView = document.getElementById('list-view');
             const viewToggleImg = document.getElementById('view-toggle-img');
-
 
             viewToggleImg.addEventListener('click', () => {
                 if (viewToggleImg.src.includes('1.png')) {
@@ -744,6 +774,17 @@
             const closeModal = () => { modal.style.display = 'none'; };
             modalClose.addEventListener('click', closeModal);
             modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+            // D-Day Modal events
+            const ddayModal = document.getElementById('dday-modal');
+            const ddayModalClose = document.getElementById('dday-modal-close');
+            const ddayInfoBtn = document.getElementById('dday-info-btn');
+            const closeDdayModal = () => { ddayModal.style.display = 'none'; };
+            
+            ddayModalClose.addEventListener('click', closeDdayModal);
+            ddayModal.addEventListener('click', (e) => { if (e.target === ddayModal) closeDdayModal(); });
+            ddayInfoBtn.addEventListener('click', showDdayModal);
+
 
             // Hide button logic
             document.querySelector('.main-container').addEventListener('click', handleHideClick);
@@ -969,6 +1010,7 @@
         </div>
     </div>
 
+    <button id="dday-info-btn">!</button>
     <button id="chat-toggle-btn">💬</button>
 
 </body>

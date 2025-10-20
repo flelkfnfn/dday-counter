@@ -378,6 +378,50 @@
             text-align: center;
         }
 
+        #chat-toggle-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 360px; /* Initial position next to the sidebar */
+            width: 50px;
+            height: 50px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 10000;
+            transition: right 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.3s ease;
+        }
+
+        #chat-toggle-btn:hover {
+            transform: scale(1.1);
+        }
+
+        /* When chat is closed */
+        body.chat-closed #chat-sidebar {
+            transform: translateX(100%);
+        }
+
+        body.chat-closed .content-wrapper {
+            padding-right: 0;
+        }
+        
+        body.chat-closed #chat-toggle-btn {
+            right: 20px; /* Move to the edge of the screen */
+        }
+
+        /* Smooth transitions */
+        #chat-sidebar {
+            transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transform: translateX(0); /* Start in view */
+        }
+
+        .content-wrapper {
+            transition: padding-right 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
     </style>
 </head>
 
@@ -672,6 +716,14 @@
         document.addEventListener('DOMContentLoaded', () => {
             initializeApp();
             initializeChat();
+
+            const chatToggleBtn = document.getElementById('chat-toggle-btn');
+            const body = document.body;
+
+            // Chat is open by default.
+            chatToggleBtn.addEventListener('click', () => {
+                body.classList.toggle('chat-closed');
+            });
         });
         
         function initializeChat() {
@@ -839,6 +891,8 @@
             </div>
         </div>
     </div>
+
+    <button id="chat-toggle-btn">💬</button>
 
 </body>
 </html>

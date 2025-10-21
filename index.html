@@ -349,7 +349,7 @@
             font-weight: 500;
         }
 
-        #anon-btn, #select-name-btn, #change-name-btn {
+        #select-name-btn, #change-name-btn {
             flex-grow: 1;
             background-color: #fff;
             color: var(--primary-color);
@@ -882,7 +882,6 @@
             const chatList = document.getElementById('chat-list');
             const contentInput = document.getElementById('chat-content');
             const submitBtn = document.getElementById('chat-submit');
-            const anonBtn = document.getElementById('anon-btn');
             const selectNameBtn = document.getElementById('select-name-btn');
             const nameModal = document.getElementById('name-modal');
             const nameList = document.getElementById('name-list');
@@ -944,7 +943,6 @@
                 }
             }
 
-            anonBtn.addEventListener('click', () => setChatName('익명'));
 
             selectNameBtn.addEventListener('click', () => {
                 nameList.innerHTML = '';
@@ -1059,7 +1057,6 @@
         <div id="chat-list" class="chat-list"></div>
         <div class="chat-input">
             <div id="chat-name-selection">
-                <button id="anon-btn">익명</button>
                 <button id="select-name-btn">선택</button>
             </div>
             <div id="chat-name-display" style="display: none;">

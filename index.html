@@ -558,6 +558,22 @@
         let currentStudentName = null;
         const hiddenEventsState = {};
 
+        (function resetOnLoad() {
+          try { localStorage.clear(); } catch {}
+          try { sessionStorage.clear(); } catch {}
+          // 서비스워커/캐시 스토리지
+          if (typeof caches !== 'undefined') {
+            caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))));
+          }
+          // IndexedDB (지원되는 브라우저에서만)
+          if (indexedDB && indexedDB.databases) {
+            indexedDB.databases().then(dbs => {
+              dbs.forEach(db => { if (db.name) indexedDB.deleteDatabase(db.name); });
+            });
+          }
+        })();
+
+        
         function calculateDdayDiff(targetDate) {
             const today = new Date();
             const target = new Date(targetDate);

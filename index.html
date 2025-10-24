@@ -888,6 +888,8 @@
             const body = document.body;
 
             // Chat is open by default.
+            body.classList.add('chat-closed'); 
+            
             chatToggleBtn.addEventListener('click', () => {
                 body.classList.toggle('chat-closed');
             });

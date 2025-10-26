@@ -485,6 +485,22 @@
         body.chat-closed #dday-info-btn {
             right: 20px;
         }
+
+        .dday-box {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(20, 20, 20, 0.8);
+            color: #fff;
+            padding: 15px 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            font-size: 1.5em;
+            text-align: center;
+            z-index: 10001;
+        }
     </style>
 </head>
 
@@ -525,6 +541,8 @@
             </div>
         </div>
     </div>
+
+    <div class="dday-box"></div>
 
     <!-- Modal Structure (for Grid View) -->
     <div id="modal" class="modal-overlay">
@@ -1098,5 +1116,16 @@
     <button id="dday-info-btn">!</button>
     <button id="chat-toggle-btn">💬</button>
 
+    <script>
+        function calculateFinalDday() {
+            const ddayBox = document.querySelector('.dday-box');
+            const targetDate = new Date('2025-12-12');
+            const today = new Date();
+            const diff = targetDate - today;
+            const dDay = Math.ceil(diff / (1000 * 60 * 60 * 24));
+            ddayBox.textContent = `최종 2025-12-12   D-${dDay}`;
+        }
+        calculateFinalDday();
+    </script>
 </body>
 </html>

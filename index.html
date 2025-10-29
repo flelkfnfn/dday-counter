@@ -624,7 +624,11 @@
         async function initializeApp() {
             const loadingOverlay = document.getElementById('loading-overlay');
             try {
-                const { data, error } = await supabaseClient.from('events').select('*');
+                const { data, error } = await supabaseClient
+                   .from('events')
+                   // id, hide 포함해서 가져오고, 숨김 제외
+                   .select('id,name,date,type,hide')
+                   .or('hide.is.null,hide.eq.0');
                 if (error) throw error;
                 events = data;
 
@@ -680,8 +684,8 @@
 
         function renderStudentDetails(name, container) {
             const studentEvents = events
-                .filter(event => event.name === name)
-                .sort((a, b) => new Date(a.date) - new Date(b.date));
+                .filter(event => event.name === name && (event.hide === 0 || event.hide == null))
+
 
             container.innerHTML = '';
             
@@ -693,7 +697,7 @@
                 container.innerHTML = '<p style="text-align:center;">예정된 전형이 없습니다.</p>';
             } else {
                 studentEvents.forEach(event => {
-                    const eventId = `${event.date}-${event.type}`;
+                    const eventId = event.id; 
                     const dday = calculateDday(event.date);
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'event-item';
@@ -859,20 +863,32 @@
 
             function handleHideClick(e) {
                 if (e.target.classList.contains('hide-btn')) {
-                    const eventItem = e.target.closest('.event-item');
-                    const eventId = eventItem.dataset.eventId;
-                    if (currentStudentName && eventId) {
-                        if (!hiddenEventsState[currentStudentName]) {
-                            hiddenEventsState[currentStudentName] = new Set();
+                    (async () => {
+                        const eventItem = e.target.closest('.event-item');
+                        const eventId = eventItem?.dataset.eventId;
+                        if (!eventId) return;
+                    
+                         // 1) DB 업데이트
+                        const { error: updErr } = await supabaseClient
+                           .from('events')
+                           .update({ hide: 1 })
+                           .eq('id', eventId);
+                        if (updErr) {
+                            alert('숨김 처리에 실패했습니다. 잠시 후 다시 시도해주세요.');
+                            return;
                         }
-                        hiddenEventsState[currentStudentName].add(eventId);
+                    
+                         // 2) 로컬 상태도 동기화
+                        const idx = events.findIndex(ev => String(ev.id) === String(eventId));
+                        if (idx >= 0) events[idx].hide = 1;
+                    
+                         // 3) UI 갱신
                         eventItem.classList.add('hidden-event');
-                        
-                        const showHiddenBtnModal = document.getElementById('show-hidden-btn');
-                        const showHiddenBtnList = document.getElementById('show-hidden-btn-list');
-                        if (showHiddenBtnModal) showHiddenBtnModal.style.display = 'block';
-                        if (showHiddenBtnList) showHiddenBtnList.style.display = 'block';
-                    }
+                    
+                         // 4) 모달 닫기
+                        const modal = document.getElementById('modal');
+                        if (modal) modal.style.display = 'none';
+                    })();                
                 }
             }
 
@@ -897,7 +913,33 @@
                 }
             });
         }
-        
+        supabaseClient
+            .channel('events-hide-sync')
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'events' },
+                payload => {
+                    const updated = payload.new;
+                    if (updated?.hide === 1) {
+                // 로컬 events 동기화
+                        const idx = events.findIndex(ev => ev.id === updated.id);
+                        if (idx >= 0) {
+                            events[idx] = updated;
+                        } else {
+                            events.push(updated);
+                        }
+                        // 현재 학생 화면 열려 있으면 재렌더
+                        if (currentStudentName) {
+                            const modalBody = document.getElementById('modal-body');
+                            const detailBody = document.querySelector('#detail-panel #detail-body');
+                            if (modalBody) renderStudentDetails(currentStudentName, modalBody);
+                            if (detailBody) renderStudentDetails(currentStudentName, detailBody);
+                        }
+                    }
+                }
+            )
+            .subscribe();
+
         document.addEventListener('DOMContentLoaded', () => {
             initializeApp();
             initializeChat();

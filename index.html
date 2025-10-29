@@ -685,6 +685,7 @@
         function renderStudentDetails(name, container) {
             const studentEvents = events
                 .filter(event => event.name === name && (event.hide === 0 || event.hide == null))
+                .sort((a, b) => new Date(a.date) - new Date(b.date))
 
 
             container.innerHTML = '';

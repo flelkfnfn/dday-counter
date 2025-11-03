@@ -624,7 +624,11 @@
         async function initializeApp() {
             const loadingOverlay = document.getElementById('loading-overlay');
             try {
-                const { data, error } = await supabaseClient.from('events').select('*');
+                const { data, error } = await supabaseClient
+                   .from('events')
+                   // id, hide 포함해서 가져오고, 숨김 제외
+                   .select('id,name,date,type,hide')
+                   
                 if (error) throw error;
                 events = data;
 
@@ -678,10 +682,11 @@
             });
         }
 
-        function renderStudentDetails(name, container) {
+        async function renderStudentDetails(name, container) {
             const studentEvents = events
-                .filter(event => event.name === name)
-                .sort((a, b) => new Date(a.date) - new Date(b.date));
+                .filter(event => event.name === name && (event.hide === 0 || event.hide == null))
+                .sort((a, b) => new Date(a.date) - new Date(b.date))
+
 
             container.innerHTML = '';
             
@@ -693,7 +698,7 @@
                 container.innerHTML = '<p style="text-align:center;">예정된 전형이 없습니다.</p>';
             } else {
                 studentEvents.forEach(event => {
-                    const eventId = `${event.date}-${event.type}`;
+                    const eventId = event.id; 
                     const dday = calculateDday(event.date);
                     const itemDiv = document.createElement('div');
                     itemDiv.className = 'event-item';
@@ -719,19 +724,37 @@
             const showHiddenBtnModal = document.getElementById('show-hidden-btn');
             const showHiddenBtnList = document.getElementById('show-hidden-btn-list');
 
-            [showHiddenBtnModal, showHiddenBtnList].forEach(btn => {
-                if (btn) {
-                    if (hiddenEventsState[name] && hiddenEventsState[name].size > 0) {
-                        btn.style.display = 'block';
-                    } else {
-                        btn.style.display = 'none';
-                    }
+            // Modal eye button: show if DB has hidden events for this student
+            if (showHiddenBtnModal) {
+                let hasHiddenInDb = events.some(ev => ev.name === name && String(ev.hide) === '1');
+                if (!hasHiddenInDb) {
+                    try {
+                        const { count } = await supabaseClient
+                            .from('events')
+                            .select('id', { count: 'exact', head: true })
+                            .eq('name', name)
+                            .eq('hide', 1);
+                        if (typeof count === 'number' && count > 0) {
+                            hasHiddenInDb = true;
+                        }
+                    } catch (_) {}
                 }
-            });
+                showHiddenBtnModal.style.display = hasHiddenInDb ? 'block' : 'none';
+            }
+
+            // List eye button: keep previous behavior (based on hiddenEventsState)
+            if (showHiddenBtnList) {
+                if (hiddenEventsState[name] && hiddenEventsState[name].size > 0) {
+                    showHiddenBtnList.style.display = 'block';
+                } else {
+                    showHiddenBtnList.style.display = 'none';
+                }
+            }
         }
 
         function showDdayModal() {
             const upcomingEvents = events
+                .filter(event => event.hide === 0 || event.hide == null)
                 .map(event => ({ ...event, dday: calculateDdayDiff(event.date) }))
                 .filter(event => event.dday >= 0 && event.dday <= 3);
 
@@ -740,7 +763,7 @@
             const modalBody = document.getElementById('dday-modal-body');
 
             if (upcomingEvents.length > 0) {
-                modalTitle.textContent = 'D-3 이내 수시 일정입니다. 힘내시고 기도해주세요!';
+                modalTitle.textContent = 'D-3 이내 수시 일정입니다.';
                 modalTitle.style.display = 'block';
                 
                 upcomingEvents.sort((a, b) => {
@@ -859,30 +882,69 @@
 
             function handleHideClick(e) {
                 if (e.target.classList.contains('hide-btn')) {
-                    const eventItem = e.target.closest('.event-item');
-                    const eventId = eventItem.dataset.eventId;
-                    if (currentStudentName && eventId) {
-                        if (!hiddenEventsState[currentStudentName]) {
-                            hiddenEventsState[currentStudentName] = new Set();
+                    (async () => {
+                        const eventItem = e.target.closest('.event-item');
+                        const eventId = eventItem?.dataset.eventId;
+                        if (!eventId) return;
+                    
+                         // 1) DB 업데이트
+                        const { error: updErr } = await supabaseClient
+                           .from('events')
+                           .update({ hide: 1 })
+                           .eq('id', eventId);
+                        if (updErr) {
+                            alert('숨김 처리에 실패했습니다. 잠시 후 다시 시도해주세요.');
+                            return;
                         }
-                        hiddenEventsState[currentStudentName].add(eventId);
+                    
+                         // 2) 로컬 상태도 동기화
+                        const idx = events.findIndex(ev => String(ev.id) === String(eventId));
+                        if (idx >= 0) events[idx].hide = 1;
+                    
+                         // 3) UI 갱신
                         eventItem.classList.add('hidden-event');
-                        
-                        const showHiddenBtnModal = document.getElementById('show-hidden-btn');
-                        const showHiddenBtnList = document.getElementById('show-hidden-btn-list');
-                        if (showHiddenBtnModal) showHiddenBtnModal.style.display = 'block';
-                        if (showHiddenBtnList) showHiddenBtnList.style.display = 'block';
-                    }
+                    
+                         // 4) 모달 닫기
+                        const modalBody = document.getElementById('modal-body');
+                        if (modalBody && currentStudentName) {
+                            renderStudentDetails(currentStudentName, modalBody);
+                        }
+                        const detailBodyContainer = document.querySelector('#detail-panel #detail-body');
+                        if (detailBodyContainer && currentStudentName) {
+                            renderStudentDetails(currentStudentName, detailBodyContainer);
+                        }
+                    })();                
                 }
             }
 
-            // Show hidden button (modal)
+            // Show hidden button (modal): unhide all hidden events for the current student
             document.getElementById('show-hidden-btn').addEventListener('click', () => {
-                if (currentStudentName && hiddenEventsState[currentStudentName]) {
-                    hiddenEventsState[currentStudentName].clear();
-                    const modalBody = document.getElementById('modal-body');
-                    renderStudentDetails(currentStudentName, modalBody);
-                }
+                (async () => {
+                    if (!currentStudentName) return;
+                    try {
+                        const { error: updErr } = await supabaseClient
+                            .from('events')
+                            .update({ hide: null })
+                            .eq('name', currentStudentName)
+                            .eq('hide', 1);
+                        if (updErr) {
+                            console.error('unhide error', updErr);
+                            return;
+                        }
+                        // Update local cache
+                        for (let i = 0; i < events.length; i++) {
+                            if (events[i].name === currentStudentName && events[i].hide === 1) {
+                                events[i].hide = null;
+                            }
+                        }
+                        const modalBody = document.getElementById('modal-body');
+                        if (modalBody) renderStudentDetails(currentStudentName, modalBody);
+                        const detailBodyContainer = document.querySelector('#detail-panel #detail-body');
+                        if (detailBodyContainer) renderStudentDetails(currentStudentName, detailBodyContainer);
+                    } catch (e) {
+                        console.error('unhide exception', e);
+                    }
+                })();
             });
 
             // Show hidden button (list view)
@@ -897,7 +959,33 @@
                 }
             });
         }
-        
+        supabaseClient
+            .channel('events-hide-sync')
+            .on(
+                'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'events' },
+                payload => {
+                    const updated = payload.new;
+                    {
+                // 로컬 events 동기화
+                        const idx = events.findIndex(ev => ev.id === updated.id);
+                        if (idx >= 0) {
+                            events[idx] = updated;
+                        } else {
+                            events.push(updated);
+                        }
+                        // 현재 학생 화면 열려 있으면 재렌더
+                        if (currentStudentName && updated?.name === currentStudentName) {
+                            const modalBody = document.getElementById('modal-body');
+                            const detailBody = document.querySelector('#detail-panel #detail-body');
+                            if (modalBody) renderStudentDetails(currentStudentName, modalBody);
+                            if (detailBody) renderStudentDetails(currentStudentName, detailBody);
+                        }
+                    }
+                }
+            )
+            .subscribe();
+
         document.addEventListener('DOMContentLoaded', () => {
             initializeApp();
             initializeChat();

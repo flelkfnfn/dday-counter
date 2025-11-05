@@ -1204,5 +1204,17 @@
     <button id="dday-info-btn">!</button>
     <button id="chat-toggle-btn">💬</button>
 
+    <script>
+        function calculateFinalDday() {
+            const ddayBox = document.querySelector('.dday-box');
+            const targetDate = new Date('2025-12-12');
+            const today = new Date();
+            const diff = targetDate - today;
+            const dDay = Math.ceil(diff / (1000 * 60 * 60 * 24));
+            ddayBox.textContent = `최종 2025-12-12   D-${dDay}`;
+        }
+        calculateFinalDday();
+    </script>
+
 </body>
 </html>
